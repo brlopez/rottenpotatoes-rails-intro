@@ -35,6 +35,16 @@ class MoviesController < ApplicationController
     redirect_to movie_path(@movie)
   end
 
+  def sort_title
+    @movies = Movie.all.sort_by(:title) {|a,b| a <=> b}
+    redirect_to movies_path
+  end
+
+  def sort_rating
+    @movies = Movie.all.sort_by(:rating) {|a,b| a <=> b}
+    redirect_to movies_path
+  end
+
   def destroy
     @movie = Movie.find(params[:id])
     @movie.destroy
