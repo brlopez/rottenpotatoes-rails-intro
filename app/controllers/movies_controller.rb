@@ -1,5 +1,8 @@
 class MoviesController < ApplicationController
 
+  @@title_sorted = 'nil'
+  @@date_sorted = 'nil'
+
   def movie_params
     params.require(:movie).permit(:title, :rating, :description, :release_date)
   end
@@ -11,7 +14,36 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+
+    @sort = params[:sort]
+
+    if @sort == 'title'
+      if @@title_sorted == 'z-0'
+        @movies = Movie.all.sort_by { |m| m.title }
+        @@title_sorted = '0-z'
+      elsif @@title_sorted =='0-z'
+        @movies = Movie.all.sort_by { |m| m.title }.reverse
+        @@title_sorted = 'z-0'
+      else
+        @movies = Movie.all.sort_by { |m| m.title }
+        @@title_sorted = '0-z'
+      end
+      
+    elsif @sort == 'release_date'
+      if @@date_sorted == 'descending' 
+        @movies = Movie.all.sort_by { |m| m.release_date }
+        @@date_sorted = 'ascending'
+      elsif @@date_sorted == 'ascending'
+        @movies = Movie.all.sort_by { |m| m.release_date }.reverse
+        @@date_sorted == 'descending'
+      else
+        @movies = Movie.all.sort_by { |m| m.release_date }
+        @@date_sorted = 'ascending'
+      end
+      
+    else
+      @movies = Movie.all
+    end
   end
 
   def new
@@ -33,16 +65,6 @@ class MoviesController < ApplicationController
     @movie.update_attributes!(movie_params)
     flash[:notice] = "#{@movie.title} was successfully updated."
     redirect_to movie_path(@movie)
-  end
-
-  def sort_title
-    @movies = Movie.all.sort_by(:title) {|a,b| a <=> b}
-    redirect_to movies_path
-  end
-
-  def sort_rating
-    @movies = Movie.all.sort_by(:rating) {|a,b| a <=> b}
-    redirect_to movies_path
   end
 
   def destroy
