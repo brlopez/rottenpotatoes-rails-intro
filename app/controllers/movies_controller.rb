@@ -1,7 +1,9 @@
 class MoviesController < ApplicationController
 
+  # sorting labels
   @@title_sorted = 'nil'
   @@date_sorted = 'nil'
+  @@set_ratings = 'nil'
 
   def movie_params
     params.require(:movie).permit(:title, :rating, :description, :release_date)
@@ -13,38 +15,70 @@ class MoviesController < ApplicationController
     # will render app/views/movies/show.<extension> by default
   end
 
+
+
   def index
 
     @sort = params[:sort]
+    @ratings_on = {'G'=>'1', 'PG'=>'1', 'PG-13'=>'1', 'R'=>'1'}
 
+    if params[:ratings] != nil
+      @ratings_on = params[:ratings]
+      @@set_ratings = params[:ratings]
+    elsif @@set_ratings != 'nil'
+      @ratings_on = @@set_ratings
+    end
+
+
+    # update sorting labels
     if @sort == 'title'
-      if @@title_sorted == 'z-0'
-        @movies = Movie.all.sort_by { |m| m.title }
-        @@title_sorted = '0-z'
-      elsif @@title_sorted =='0-z'
-        @movies = Movie.all.sort_by { |m| m.title }.reverse
+      @@date_sorted = nil
+
+      if @@title_sorted == '0-z'
         @@title_sorted = 'z-0'
+
+      elsif @@title_sorted == 'z-0'
+        @@title_sorted = '0-z'
+
       else
-        @movies = Movie.all.sort_by { |m| m.title }
         @@title_sorted = '0-z'
       end
-      
-    elsif @sort == 'release_date'
-      if @@date_sorted == 'descending' 
-        @movies = Movie.all.sort_by { |m| m.release_date }
+    end
+
+    if @sort == 'release_date'
+      @@title_sorted = nil
+
+      if @@date_sorted == 'ascending'
+        @@date_sorted = 'descending'
+
+      elsif @@date_sorted == 'descending'
         @@date_sorted = 'ascending'
-      elsif @@date_sorted == 'ascending'
-        @movies = Movie.all.sort_by { |m| m.release_date }.reverse
-        @@date_sorted == 'descending'
+
       else
-        @movies = Movie.all.sort_by { |m| m.release_date }
         @@date_sorted = 'ascending'
       end
-      
+    end
+
+
+    # display movies 
+    if @@title_sorted == 'z-0'
+      @movies = Movie.all.select {|m| @ratings_on.keys.include?(m.rating)}.sort_by { |m| m.title }.reverse
+
+    elsif @@title_sorted =='0-z'
+      @movies = Movie.all.select {|m| @ratings_on.keys.include?(m.rating)}.sort_by { |m| m.title }
+
+    elsif @@date_sorted == 'descending'
+      @movies = Movie.all.select {|m| @ratings_on.keys.include?(m.rating)}.sort_by { |m| m.release_date }.reverse
+    
+    elsif @@date_sorted == 'ascending'
+      @movies = Movie.all.select {|m| @ratings_on.keys.include?(m.rating)}.sort_by { |m| m.release_date }
+    
     else
-      @movies = Movie.all
+      @movies = Movie.all.select{|m| @ratings_on.keys.include?(m.rating)}
     end
   end
+
+
 
   def new
     # default: render 'new' template
